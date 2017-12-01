@@ -23,10 +23,8 @@ def recommend_tag(db, tags):
 
         for i in range(len(recommendations)):
             tag_a = recommendations[i]
-            print(tag_a)
             for j in range(i+1, len(recommendations)):
                 tag_b = recommendations[j]
-                print(tag_b)
                 if get_close_matches(tag_a, [tag_b]):
                     loser = max([tag_a, tag_b], key=lambda x: tags_dict[x])
                     recommendations.remove(loser)

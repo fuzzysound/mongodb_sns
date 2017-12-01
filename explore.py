@@ -66,39 +66,61 @@ def explore(db, user):
                     for doc in all_docs_sorted:
                         if doc['id'] != user['id']:
                             show_post(doc)
+                        else:
+                            continue
 
                         while True:
-                            if user['id'] in doc['likes']:
-                                liked = True
-                                demand = input('\nWhat do you want to do? [next/comment/undo like/skip7days]: ')
-                            else:
-                                liked = False
-                                demand = input('\nWhat do you want to do? [next/comment/like/skip7days]: ')
 
-                            if demand.lower() in ['next', 'comment', 'undo like', 'like', 'skip7days']:
-                                if liked and demand.lower() == 'like':
-                                    print('\nInvalid input!')
-                                elif not liked and demand.lower() == 'undo like':
-                                    print('\nInvalid input!')
+                            skip_7_days = False
+                            while True:
+                                if user['id'] in doc['likes']:
+                                    liked = True
+                                    demand = input('\nWhat do you want to do? [next/comment/undo like/follow/skip7days]: ')
                                 else:
-                                    break
-                            else:
-                                print('\nInvalid input!')
+                                    liked = False
+                                    demand = input('\nWhat do you want to do? [next/comment/like/follow/skip7days]: ')
 
-                        if demand.lower() == 'next':
-                            continue
-                        elif demand.lower() == 'comment':
-                            write_comment(db, user, doc)
-                            continue
-                        elif demand.lower() == 'undo like':
-                            db.posts.update({'_id': doc['_id']}, {'$pull': {'likes': user['id']}})
-                            print('\nUndid like it!')
-                            continue
-                        elif demand.lower() == 'like':
-                            db.posts.update({'_id': doc['_id']}, {'$push': {'likes': user['id']}})
-                            print('\nLiked it!')
-                            continue
-                        else:
+                                if demand.lower() in ['next', 'comment', 'undo like', 'like', 'follow', 'skip7days']:
+                                    if liked and demand.lower() == 'like':
+                                        print('\nInvalid input!')
+                                    elif not liked and demand.lower() == 'undo like':
+                                        print('\nInvalid input!')
+                                    else:
+                                        break
+                                else:
+                                    print('\nInvalid input!')
+
+                            if demand.lower() == 'next':
+                                break
+                            elif demand.lower() == 'comment':
+                                write_comment(db, user, doc)
+                                continue
+                            elif demand.lower() == 'undo like':
+                                db.posts.update({'_id': doc['_id']}, {'$pull': {'likes': user['id']}})
+                                print('\nUndid like it!')
+                                user = db.userdb.find_one({'id': user['id']})
+                                doc = db.posts.find_one({'_id': doc['_id']})
+                                continue
+                            elif demand.lower() == 'like':
+                                db.posts.update({'_id': doc['_id']}, {'$push': {'likes': user['id']}})
+                                print('\nLiked it!')
+                                user = db.userdb.find_one({'id': user['id']})
+                                doc = db.posts.find_one({'_id': doc['_id']})
+                                continue
+                            elif demand.lower() == 'follow':
+                                if doc['id'] in user['followings']:
+                                    print('\nYou are already following that user!')
+                                else:
+                                    db.userdb.update({'id': user['id']}, {'$push': {'followings': doc['id']}})
+                                    db.userdb.update({'id': doc['id']}, {'$push': {'followers': user['id']}})
+                                    print('\nSuccessfully followed!')
+                                    user = db.userdb.find_one({'id': user['id']})
+                                    continue
+                            else:
+                                skip_7_days = True
+                                break
+
+                        if skip_7_days:
                             break
 
                     else:
@@ -110,6 +132,10 @@ def explore(db, user):
                     print('\nNo more post!')
                     break
 
+            break
+
+        except (AttributeError, TypeError):
+            print("\nSorry, but this service is not available now.")
             break
 
         except KeyboardInterrupt:

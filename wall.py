@@ -16,23 +16,25 @@ def wall(db,user):
                 for doc in cursor:
                     show_post(doc)
                     while True:
-                        demand = input('\nWhat do you want to do? [next/comment/delete]: ')
-                        if demand.lower() in ['next', 'comment', 'delete']:
+
+                        while True:
+                            demand = input('\nWhat do you want to do? [next/comment/delete]: ')
+                            if demand.lower() in ['next', 'comment', 'delete']:
+                                break
+                            else:
+                                print('\nInvalid input!')
+                        if demand.lower() == 'next':
                             break
-                        else:
-                            print('\nInvalid input!')
-                    if demand.lower() == 'next':
-                        continue
-                    elif demand.lower() == 'comment':
-                        write_comment(db, user, doc)
-                        continue
-                    else:
-                        confirm = input('\nAre you serious? [y/any other key]: ')
-                        if confirm.lower() == 'y':
-                            db.posts.delete_one({'_id': doc['_id']})
+                        elif demand.lower() == 'comment':
+                            write_comment(db, user, doc)
                             continue
                         else:
-                            continue
+                            confirm = input('\nAre you serious? [y/any other key]: ')
+                            if confirm.lower() == 'y':
+                                db.posts.delete_one({'_id': doc['_id']})
+                                break
+                            else:
+                                continue
                 print('\nNo more post!')
                 break
 

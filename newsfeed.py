@@ -19,35 +19,41 @@ def newsfeed(db,user):
                 for doc in cursor:
                     show_post(doc)
                     while True:
-                        if user['id'] in doc['likes']:
-                            liked = True
-                            demand = input('\nWhat do you want to do? [next/comment/undo like]: ')
-                        else:
-                            liked = False
-                            demand = input('\nWhat do you want to do? [next/comment/like]: ')
 
-                        if demand.lower() in ['next', 'comment', 'undo like', 'like']:
-                            if liked and demand.lower() == 'like':
-                                print('\nInvalid input!')
-                            elif not liked and demand.lower() == 'undo like':
-                                print('\nInvalid input!')
+                        while True:
+                            if user['id'] in doc['likes']:
+                                liked = True
+                                demand = input('\nWhat do you want to do? [next/comment/undo like]: ')
                             else:
-                                break
+                                liked = False
+                                demand = input('\nWhat do you want to do? [next/comment/like]: ')
+
+                            if demand.lower() in ['next', 'comment', 'undo like', 'like']:
+                                if liked and demand.lower() == 'like':
+                                    print('\nInvalid input!')
+                                elif not liked and demand.lower() == 'undo like':
+                                    print('\nInvalid input!')
+                                else:
+                                    break
+                            else:
+                                print('\nInvalid input!')
+                        if demand.lower() == 'next':
+                            break
+                        elif demand.lower() == 'comment':
+                            write_comment(db, user, doc)
+                            continue
+                        elif demand.lower() == 'undo like':
+                            db.posts.update({'_id': doc['_id']}, {'$pull':{'likes': user['id']}})
+                            print('\nUndid like it!')
+                            user = db.userdb.find_one({'id': user['id']})
+                            doc = db.posts.find_one({'_id': doc['_id']})
+                            continue
                         else:
-                            print('\nInvalid input!')
-                    if demand.lower() == 'next':
-                        continue
-                    elif demand.lower() == 'comment':
-                        write_comment(db, user, doc)
-                        continue
-                    elif demand.lower() == 'undo like':
-                        db.posts.update({'_id': doc['_id']}, {'$pull':{'likes': user['id']}})
-                        print('\nUndid like it!')
-                        continue
-                    else:
-                        db.posts.update({'_id': doc['_id']}, {'$push':{'likes': user['id']}})
-                        print('\nLiked it!')
-                        continue
+                            db.posts.update({'_id': doc['_id']}, {'$push':{'likes': user['id']}})
+                            print('\nLiked it!')
+                            user = db.userdb.find_one({'id': user['id']})
+                            doc = db.posts.find_one({'_id': doc['_id']})
+                            continue
 
                 print('\nNo more post!')
                 break
